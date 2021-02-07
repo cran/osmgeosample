@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>An R Package for Geostatistical Sampling Designs with OSM data</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h2>An R Package for Geostatistical Sampling Designs with OSM data</h2>
+
+<h3>Henry Crosby, Godwin Yeobah, J. Porto De Albuquerque</h3>
+
+<p><strong>Abstract</strong>:
+We introduce a new <em>R</em> package, <em>OSMGeosample</em>, for constructing geostatistical sampling designs with OSM data. The new package implements random and spatially-regulated sampling designs. We illustrate the use of the package using a boundary dataset and OSM building data for a slum in Idikan. In addition, we provide the ability to sample on user-defined locations which can be joined to OSM features for reproducibility and the extension of information. The user can sample OSM features of one or more data type (point, line, polygon etc) and one or more value and key pairs.</p>
+
+<p><em>OSMGeosample</em> can be downloaded from github at <a href="https://github.com/IGSD-UoW/osmgeosample">https://github.com/IGSD-UoW/osmgeosample</a>.</p>
+
+<p><strong>Keywords</strong>: inhibitory sampling designs, Geostatistics, <em>R</em></p>
+
+<p><strong>Address</strong>: Institute for Global Sustainable Development, University of Warwick, Coventry, CV4 7AL, UK</p>
+
+<p><strong>E-mail</strong>:  <a href="mailto:henry.crosby@warwick.ac.uk">henry.crosby@warwick.ac.uk</a>, <a href="mailto:Godwin.Yeobah@warwick.ac.uk">Godwin.Yeobah@warwick.ac.uk</a>, <a href="mailto:J.Porto@warwick.ac.uk">J.Porto@warwick.ac.uk</a></p>
+
+<p><strong>URL</strong>: <a href="https://warwick.ac.uk/fac/arts/schoolforcross-facultystudies/igsd/">Institute for Global Sustainable Development.</a>.  </p>
+
+<h2>Introduction</h2>
+
+<p>We provide spatial sampling designs for investigating unobserved spatial phenomena, i.e., identifying properties to select for a survey. We create a randomized inhibitory spatial sampling functions to address the problem of spatial prediction (Chipeta et al, 2016). Two functions run inhibitory designs plus close pairs&#39; on discrete and continuous data. In an inhibitory design, any pair of sample locations must be separated by at least an inhibition distance 𝛿. In addition, a third function runs random sampling for comparison.</p>
+
+<p>The motivation for creating the methods in this package is undertake valid spatially-regulated sampling and to conduct a survey in irregular (urban) environments. In fact, in our example our sampling frame is the complete set of geo-located household locations in a slum in Idikan (Watson et al, 2019).</p>
+
+<p>Unlike the <em>Geosample</em> package, the user is able to define a boundary to extract OSM features or use their own data to spatially join it to OSM features. In addition, the output table provides a list of the original and OSM ids with the (centroid) longitudinal and latitudinal values. Furthermore, the user is provided with an interactive map powered by the <em>mapview</em> package which shows the full dataset (in red) alongside the sampled dataset (in yellow) and the defined boundary or features.</p>
+
+<h2>Installing OSM Geosample</h2>
+
+<p>If you update the sf package and then try to install osmgeosample it will error “Error: sf was built under R version …”. If you don’t have the latest version of R, updating the version will fix this issue. Alternatively You can get around this by setting </p>
+
+<pre><code>Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=&quot;true&quot;)
+</code></pre>
+
+<p>An example script of how to install the package from GITHub.</p>
+
+<pre><code class="Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=&quot;true&quot;)">Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=&quot;true&quot;)
+setwd(&quot;/PATH/TO/PACKAGE/&quot;)
+devtools::install_local(&quot;osmgeosample-master.zip&quot;)
+</code></pre>
+
+<h2>OSM Random Sampling (osm_random_sample)</h2>
+
+<p>The osm_random_sample function creates a spatially random sample from either (1) a discrete set of OSM features defined in the function parameters or (2) a continuous surface defined by a user specified geographical region. The OSM features can be a subset of all features based on OSM key and value pairs (i.e., buildings, cafes, restaurants etc). The features can also be a subset of all data based on the feature type (i.e., point, polygon etc). An interactive map and data.frame are returned, both showing the full dataset, geographical locations and sampled data.</p>
+
+<h3>Parameters:</h3>
+
+<p><strong>bounding_geom:</strong> an <em>sf</em> or <em>sp</em> object (with N \geq
+ size) where each line corresponds to one spatial location. It
+ should contain values of 2D coordinates, data and, optionally, covariate(s)
+ value(s) at the locations. This argument must be provided when sampling
+ from a &#39;discrete&#39; set of points, see &#39;type&#39; below for
+ details. This should only be provided when boundary_or_feature 
+ = &#39;boundary&#39;.</p>
+
+<p><strong>dis_or_cont:</strong> a string of either &#39;discrete&#39;,
+ from a set of N potential sampling points or &#39;continuum&#39; from
+ independent, &#39;completely&#39; random points.</p>
+
+<p><strong>sample_size:</strong> a non-negative integer giving the total number of
+ locations to be sampled.</p>
+
+<p><strong>plotit:</strong> a &#39;logical&#39; specifying if graphical output is required. Default
+ is plotit = TRUE.</p>
+
+<p><strong>plotit_leaflet:</strong> a &#39;logical&#39; specifying if leaflet (html) graphical output
+ is required. This is prioritised over plotit if both are selected. Default
+ is plotit_leaflet = TRUE.</p>
+
+<p><strong>boundary:</strong> a categorical variable to determine whether the exact boundary 
+(boundary = 0), bounding box (boundary = 1) or a
+ buffer around the boundary boundary = 2) is used for sampling.
+ Default is boundary = 0.</p>
+
+<p><strong>buff_dist:</strong> if boundary = 2 then this value determines the size
+ of the buffer by distance. The default is buff_dist is NULL).</p>
+
+<p><strong>buff_epsg:</strong> if boundary = 2 then this value determines the local
+ geographic grid reference so that the buffer can be calculated in meters.
+ The default is  buff_epsg = 4326) which will use decimal degrees
+ instead of meters. As an example, 27700 relates to the British National
+ Grid.</p>
+
+<p><strong>join_type:</strong> a text value to determine how to spatially join all features
+ with the boundary. The options are &#39;within&#39; or &#39;intersect&#39;.</p>
+
+<p><strong>key:</strong> A feature key as defined in OSM. An example is &#39;building&#39;.</p>
+
+<p><strong>value:</strong> a value for a feature key (&#39;key&#39;); can be negated with an
+ initial exclamation mark, value = &#39;!this&#39;, and can also be a vector, value
+ = c (&#39;this&#39;, &#39;that&#39;). An example is &#39;cafe&#39;.</p>
+
+<p><strong>data_return:</strong> specifies what data types (as specified in OSM) you want
+ returned. More than one can be selected. The options are &#39;osm_polygons&#39;,
+ &#39;osm_points&#39;, &#39;osm_multipolygons&#39;,&#39;osm_multilines&#39;,&#39;osm_lines&#39;.</p>
+
+<p><strong>boundary_or_feature:</strong> specifies whether the user inputs a boundary or
+ a set of user-inputted features. For example if the user selects &ldquo;boundary&rdquo;,
+ they can provide a spatial data frame or OSM locality which will query the
+ osm features within that boundary or locality. If the user selects &ldquo;feature&rdquo;
+ then they can provide a data frame of features that they want to sample.</p>
+
+<p><strong>feature_geom:</strong>  is a user inputted  data frame of features that are
+ required to be sampled. This should only be provided when boundary_or_feature 
+ = &#39;feature&#39;.</p>
+
+<p><strong>join_features_to_osm:</strong> is a TRUE or FALSE variable which allows the
+ user to specify whether they want their feature geom to be spatially joined
+  to OSM features. The output sampling data frame will have an additional
+  column showing the joined &#39;OSM_id&#39;. The interactive map will also plot the OSM
+  features.</p>
+
+<h3>Returns</h3>
+
+<p>(1) A data.frame object named &#39;results&#39; of length <em>n</em>
+ containing the final sampled ids (osm, original or both), centroid longitude and
+ latitude and a 0/1 value determining whether the instance is in the selected
+ sample (named inSample), if sampling from a &#39;discrete&#39; set of points. A data.frame object of dimension <em>n</em> by <em>3</em> containing the serial id and centroid 
+ locations for all sample instances,if sampling from a &#39;continuum&#39;. </p>
+
+<p>(2) An interactive map powered by <strong>mapview</strong> showing the boundary, full dataset and
+sampled data.</p>
+
+<h3>Example</h3>
+
+<pre><code class="c">library(sp)
+bounding_geom&lt;-
+SpatialPolygonsDataFrame(
+   SpatialPolygons(list(Polygons(list(Polygon(
+       cbind(
+           c(3.888959,3.888744,3.888585,3.888355,3.887893,3.887504,3.886955,3.886565,3.886303,3.886159,
+           3.885650,3.885650,3.885595,3.885404,3.885444,3.885897,3.886692,3.887241,3.888068,3.888323,
+           3.888697,3.889150,3.889548,3.889890,3.890184,3.890828,3.891258,3.891807,3.892061,3.892292,
+           3.892689,3.893294,3.893008,3.893676,3.888959),
+           c(7.379483,7.379785,7.380024,7.380294,7.380629,7.380986,7.381448,7.381861,7.382243,7.382474,
+           7.383277,7.383468,7.383890,7.384263,7.384669,7.385258,7.385313,7.385194,7.384868,7.384900,
+           7.385051,7.385067,7.384955,7.384749,7.384526,7.384120,7.384009,7.384080,7.384430,7.384478,
+           7.384629,7.384772,7.383269,7.380963,7.379483)))), ID=1))),
+   data.frame( ID=1))
+proj4string(bounding_geom) &lt;- CRS(&#39;+proj=longlat +datum=WGS84&#39;)
+
+set.seed(15892)
+xy.sample &lt;- osm_random_sample(buff_dist=NULL, bounding_geom = bounding_geom,
+                              key= &#39;building&#39;, value = NULL, boundary = 0,
+                              buff_epsg = NULL, join_type = &#39;intersect&#39;,
+                              dis_or_cont = &#39;discrete&#39;, sample_size = 70,
+                              plotit = TRUE, plotit_leaflet = TRUE,
+                              data_return= c(&#39;osm_polygons&#39;))
+</code></pre>
+
+<h2>OSM Inhibitory Sampling with Discrete Data (osm_discrete_inhibit_sample)</h2>
+
+<p>osm_discrete_inhibit_sample creates a spatially discrete sample from a specified 
+set of OSM spatial locations within a polygonal sampling region using
+  &#39;inhibitory plus close pairs&#39;. The OSM features can be a subset all features based on OSM key and value pairs (i.e., buildings, cafes, restaurants etc). The features can also be a of all data based on the feature type, i.e., point, polygon etc. An interactive map and data.frame are both returned, both showing the full dataset, geographical locations and sampled data.</p>
+
+<h3>Parameters</h3>
+
+<p><strong>bounding_geom:</strong> an <em>sf</em> or <em>sp</em> object (with N \geq
+ size) where each line corresponds to one spatial location. It
+ should contain values of 2D coordinates, data and, optionally, covariate(s)
+ value(s) at the locations. This argument must be provided when sampling
+ from a &#39;discrete&#39; set of points, see &#39;type&#39; below for
+ details. This should only be provided when boundary_or_feature 
+ = &#39;boundary&#39;.</p>
+
+<p><strong>delta:</strong> The minimum permissible distance between any two locations in
+  preliminary sample. This can be allowed to vary with number of {&#39;close
+  pairs&#39;} if a \bold{simple inhibitory} design is compared to one of the
+  \bold{inhibitory plus close pairs} design.</p>
+
+<p><strong>delta.fix:</strong> A &#39;logical&#39; input which specifies whether {&#39;delta&#39;} is
+  fixed or allowed to vary with number of close pairs {k}. Default is
+  {delta.fix = FALSE}.</p>
+
+<p><strong>k:</strong> The number of close-pair locations in the sample. It must be an
+  integer between 0 and {size}/2.</p>
+
+<p><strong>cp.criterion:</strong> The criterion for choosing close pairs {k}. The
+  {&#39;cp.zeta&#39;} criterion chooses locations not included in the initial
+  sample, from the uniform distribution of a disk with radius {&#39;zeta&#39;}
+  (NB: {zeta} argument must be provided for this criterion). The
+  {&#39;cp.neighb&#39;} criterion chooses nearest neighbours amongst locations
+  not included in the initial sample ({&#39;zeta&#39;} becomes trivial for
+  {&#39;cp.neighb&#39;} criterion).</p>
+
+<p><strong>zeta:</strong> The maximum permissible distance (radius of a disk with center
+  {x<sup>{*}_{j},</sup> j = 1, \ldots, k}) within which a close-pair point is
+  placed. See \bold{Details}.</p>
+
+<p><strong>ntries:</strong> The number of rejected proposals after which the algorithm
+  terminates.</p>
+
+<p><strong>sample_size:</strong> a non-negative integer giving the total number of
+ locations to be sampled.</p>
+
+<p><strong>plotit:</strong> a &#39;logical&#39; specifying if graphical output is required. Default
+ is plotit = TRUE.</p>
+
+<p><strong>plotit_leaflet:</strong> a &#39;logical&#39; specifying if leaflet (html) graphical output
+ is required. This is prioritised over plotit if both are selected. Default
+ is plotit_leaflet = TRUE.</p>
+
+<p><strong>boundary:</strong> a categorical variable to determine whether the exact boundary 
+(boundary = 0), bounding box (boundary = 1) or a
+ buffer around the boundary boundary = 2) is used for sampling.
+ Default is boundary = 0.</p>
+
+<p><strong>buff_dist:</strong> if boundary = 2 then this value determines the size
+ of the buffer by distance. The default is buff_dist is NULL).</p>
+
+<p><strong>buff_epsg:</strong> if boundary = 2 then this value determines the local
+ geographic grid reference so that the buffer can be calculated in meters.
+ The default is  buff_epsg = 4326) which will use decimal degrees
+ instead of meters. As an example, 27700 relates to the British National
+ Grid.</p>
+
+<p><strong>join_type:</strong> a text value to determine how to spatially join all features
+ with the boundary. The options are &#39;within&#39; or &#39;intersect&#39;.</p>
+
+<p><strong>key:</strong> A feature key as defined in OSM. An example is &#39;building&#39;.</p>
+
+<p><strong>value:</strong> a value for a feature key (&#39;key&#39;); can be negated with an
+ initial exclamation mark, value = &#39;!this&#39;, and can also be a vector, value
+ = c (&#39;this&#39;, &#39;that&#39;). An example is &#39;cafe&#39;.</p>
+
+<p><strong>data_return:</strong> specifies what data types (as specified in OSM) you want
+ returned. More than one can be selected. The options are &#39;osm_polygons&#39;,
+ &#39;osm_points&#39;, &#39;osm_multipolygons&#39;,&#39;osm_multilines&#39;,&#39;osm_lines&#39;.</p>
+
+<p><strong>boundary_or_feature:</strong> specifies whether the user inputs a boundary or
+ a set of user-inputted features. For example if the user selects &ldquo;boundary&rdquo;,
+ they can provide a spatial data frame or OSM locality which will query the
+ osm features within that boundary or locality. If the user selects &ldquo;feature&rdquo;
+ then they can provide a data frame of features that they want to sample.</p>
+
+<p><strong>feature_geom:</strong>  is a user inputted  data frame of features that are
+ required to be sampled. This should only be provided when boundary_or_feature 
+ = &#39;feature&#39;.</p>
+
+<p><strong>join_features_to_osm:</strong> is a TRUE or FALSE variable which allows the
+ user to specify whether they want their feature geom to be spatially joined
+  to OSM features. The output sampling data frame will have an additional
+  column showing the joined &#39;OSM_id&#39;. The interactive map will also plot the OSM
+  features.</p>
+
+<h3>Returns</h3>
+
+<p>(1) A data.frame object named &#39;results&#39; of length <em>n</em>
+ containing the final sampled ids (osm, original or both), centroid longitude and
+ latitude and a 0/1 value determining whether the instance is in the selected
+ sample (named inSample).. </p>
+
+<p>(2) An interactive map powered by <strong>mapview</strong> showing the boundary, full dataset and
+sampled data.</p>
+
+<h3>Details (Chipeta, 2019)</h3>
+
+<p>To draw a sample of size n from a population of spatial
+  locations X_{i} : i  = 1,&hellip;,N, with the property that the
+  distance between any two sampled locations is at least delta, the
+  function implements the following algorithm. </p>
+
+<p>Step 1. Draw an initial sample of size n completely at random and call this
+    x_i  : i  = 1,&hellip;,n.</p>
+
+<p>Step 2. Set i  = 1. </p>
+
+<p>Step 3. Calculate the smallest distance, d_min, from x_i  to
+  all other x_j  in the initial sample.</p>
+
+<p>Step 4. If d_min &gt;= delta}, increase i by 1 and return to step 2 if
+  {i &lt;= n}, otherwise stop. </p>
+
+<p>Step 5. If d_min &lt; delta,
+  draw an integer j  at random from 1,  2,..,N, set
+  x_i  = X_j  and return to step 3.</p>
+
+<p>Samples generated in this way exhibit  more regular spatial arrangements
+  than random samples of the same size. The degree of regularity
+  achievable will be influenced by the spatial arrangement of the population
+  (X_i  : i  = 1,&hellip;,N), the specified value of delta and
+  the sample size, n. For any given population, if n  and/or
+  delta is too large, a sample of the required size with the distance
+  between any two sampled locations at least delta will not be
+  achievable; the algorithm will then find n_s &lt; n points that can be
+  placed for the given parameters.</p>
+
+<p><strong>Sampling close pairs of points.</strong></p>
+
+<p>For some purposes, typically when using the same sample for parameter
+  estimation and spatial prediction, it is desirable that a spatial sampling
+  scheme include pairs of closely spaced points (x). The OSMGeosample offers
+  two ways of specifying close pairs, either as the closest available
+  unsampled point to an existing sampled point (cp.critetrion =
+  cp.neighb), or as a random choice from all available unsampled
+  points within distance zeta of an existing sampled point
+  (cp.criterion = cp.zeta). The algorithm proceeds as follows.</p>
+
+<p>Let k be the required number of close pairs. </p>
+
+<p>Step 1. Construct a simple inhibitory design <strong>SI</strong>(n - k, \delta).</p>
+
+<p>Step 2. Sample k from x<em>1,&hellip;, x</em>{n-k} without
+  replacement and call this set x_j : j = 1,&hellip;, k}.</p>
+
+<p>Step 3. For each x<em>j: j = 1,&hellip;, k}, select a close pair
+  x</em>{n-k+j} according to the specified criterion.</p>
+
+<h3>Notes</h3>
+
+<p>(1) Depending on the spatial configuration of potential sampling
+  locations and, when the selection criterion (cp.criterion = cp.zeta),
+  the specified value of zeta, it is possible that one or more of the
+  selected points  x_j in Step 2 will not have an eligible &ldquo;close
+  pair&#39;&#39;. In this case, the algorithm will try  find an alternative
+  x_j and report a warning if it fails to do so.</p>
+
+<p>(2) If &#39;delta&#39; is set to 0, a completely random sample is generated.
+  In this case, &#39;close pairs&#39; are not permitted and &#39;zeta&#39;
+  becomes trivial.</p>
+
+<h3>Example</h3>
+
+<pre><code class="c"> @examples
+ library(sp)
+bounding_geom&lt;-
+SpatialPolygonsDataFrame(
+    SpatialPolygons(list(Polygons(list(Polygon(
+               cbind(
+           c(3.888959,3.888744,3.888585,3.888355,3.887893,3.887504,3.886955,3.886565,3.886303,3.886159,
+           3.885650,3.885650,3.885595,3.885404,3.885444,3.885897,3.886692,3.887241,3.888068,3.888323,
+           3.888697,3.889150,3.889548,3.889890,3.890184,3.890828,3.891258,3.891807,3.892061,3.892292,
+           3.892689,3.893294,3.893008,3.893676,3.888959),
+           c(7.379483,7.379785,7.380024,7.380294,7.380629,7.380986,7.381448,7.381861,7.382243,7.382474,
+           7.383277,7.383468,7.383890,7.384263,7.384669,7.385258,7.385313,7.385194,7.384868,7.384900,
+           7.385051,7.385067,7.384955,7.384749,7.384526,7.384120,7.384009,7.384080,7.384430,7.384478,
+           7.384629,7.384772,7.383269,7.380963,7.379483)))), ID=1))),
+    data.frame( ID=1))
+proj4string(bounding_geom) &lt;- CRS(&#39;+proj=longlat +datum=WGS84&#39;)
+
+set.seed(15892)
+xy.sample &lt;- osm_discrete_inhibit_sample(bounding_geom=bounding_geom,
+  data_return=c(&#39;osm_polygons&#39;),boundary=0, buff_dist=NULL, buff_epsg=NULL,
+  join_type=&#39;within&#39;, sample_size=70, plotit=TRUE, plotit_leaflet = TRUE,
+  delta = 5, key =&#39;building&#39;, value=NULL, delta.fix = TRUE, k = 0,
+  cp.criterion = &#39;cp.neighb&#39;, zeta = 0.025, ntries = 5)
+</code></pre>
+
+<h2>OSM Inhibitory Sampling with Continuous Data (osm_contin_inhibit_sample)</h2>
+
+<p>osm_contin_inhibit_sample creates a spatially continous sample of locations within a
+  polygonal sampling using inhibitory plus close pairs&#39; (Chipeta, 2019). The region can be defined using OSM data or a user defined polygon or features. The OSM features can be a subset all features based on OSM key and value pairs (i.e., buildings, cafes, restaurants etc). The features can also be a of all data based on the feature type, i.e., point, polygon etc. An interactive map and data.frame are both returned, both showing the full dataset, geographical locations and sampled data.</p>
+
+<h3>Parameters</h3>
+
+<p><strong>bounding_geom:</strong> a {sf} or {sp} object (with {N \geq
+  {size}}) where each line corresponds to one spatial location. It
+  should contain values of 2D coordinates, data and, optionally, covariate(s)
+  value(s) at the locations. This argument must be provided when sampling
+  from a {&#39;discrete&#39;} set of points, see {&#39;type&#39;} below for
+  details.</p>
+
+<p><strong>sample_size:</strong> a non-negative integer giving the total number of
+ locations to be sampled.</p>
+
+<p><strong>plotit:</strong> a &#39;logical&#39; specifying if graphical output is required. Default
+ is plotit = TRUE.</p>
+
+<p><strong>plotit_leaflet:</strong> a &#39;logical&#39; specifying if leaflet (html) graphical output
+ is required. This is prioritised over plotit if both are selected. Default
+ is plotit_leaflet = TRUE.</p>
+
+<p><strong>boundary:</strong> a categorical variable to determine whether the exact boundary 
+(boundary = 0), bounding box (boundary = 1) or a
+ buffer around the boundary boundary = 2) is used for sampling.
+ Default is boundary = 0.</p>
+
+<p><strong>buff_dist:</strong> if boundary = 2 then this value determines the size
+ of the buffer by distance. The default is buff_dist is NULL).</p>
+
+<p><strong>buff_epsg:</strong> if boundary = 2 then this value determines the local
+ geographic grid reference so that the buffer can be calculated in meters.
+ The default is  buff_epsg = 4326) which will use decimal degrees
+ instead of meters. As an example, 27700 relates to the British National
+ Grid.</p>
+
+<p><strong>join_type:</strong> a text value to determine how to spatially join all features
+ with the boundary. The options are &#39;within&#39; or &#39;intersect&#39;.</p>
+
+<p><strong>key:</strong> A feature key as defined in OSM. An example is &#39;building&#39;.</p>
+
+<p><strong>value:</strong> a value for a feature key (&#39;key&#39;); can be negated with an
+ initial exclamation mark, value = &#39;!this&#39;, and can also be a vector, value
+ = c (&#39;this&#39;, &#39;that&#39;). An example is &#39;cafe&#39;.</p>
+
+<p><strong>data_return:</strong> specifies what data types (as specified in OSM) you want
+ returned. More than one can be selected. The options are &#39;osm_polygons&#39;,
+ &#39;osm_points&#39;, &#39;osm_multipolygons&#39;,&#39;osm_multilines&#39;,&#39;osm_lines&#39;.</p>
+
+<p><strong>boundary_or_feature:</strong> specifies whether the user inputs a boundary or
+ a set of user-inputted features. For example if the user selects &quot;boundary&rdquo;,
+ they can provide a spatial data frame or OSM locality which will query the
+ osm features within that boundary or locality. If the user selects &ldquo;feature&rdquo;
+ then they can provide a data frame of features that they want to sample.</p>
+
+<p><strong>feature_geom:</strong>  is a user inputted  data frame of features that are
+ required to be sampled. This should only be provided when boundary_or_feature 
+ = &#39;feature&#39;.</p>
+
+<p><strong>join_features_to_osm:</strong> is a TRUE or FALSE variable which allows the
+ user to specify whether they want their feature geom to be spatially joined
+  to OSM features. The output sampling data frame will have an additional
+  column showing the joined &#39;OSM_id&#39;. The interactive map will also plot the OSM
+  features.</p>
+
+<p><strong>delta:</strong> minimum permissible distance between any two locations in
+  preliminary sample. This can be allowed to vary with the number of
+ {&#39;close pairs&#39;} if a \bold{simple inhibitory} design is compared to
+  one of the \bold{inhibitory plus close pairs} design.</p>
+
+<p><strong>delta.fix:</strong> &#39;logical&#39; specifies whether {delta} is fixed or allowed
+to vary with number of close pairs {k}. Default is {delta.fix =
+  FALSE}.</p>
+
+<p><strong>k:</strong> number of locations in preliminary sample to be replaced by near
+  neighbours of other preliminary sample locations to form {close pairs}
+  (integer between 0 and {size/2}). A \bold{simple inhibitory} deisgn is
+  generated when {k = 0}.</p>
+
+<p><strong>rho:</strong> maximum distance between the two locations in a
+ {&#39;close-pair&#39;}.</p>
+
+<p><strong>ntries:</strong> number of rejected proposals after which the algorithm will terminate.</p>
+
+<h3>Details (Chipeta, 2019)</h3>
+
+<p>To draw a simple inhibitory (<strong>SI</strong>) sample of size n
+  from a spatially continuous region (A), with the property that the
+  distance between any two sampled locations is at least delta, the
+  following algorithm is used. </p>
+
+<p>Step 1. Set i  = 1 and
+  generate a point x_1  uniformly distributed on D.</p>
+
+<p>Step 2. Generate a point x  uniformly distributed on
+  D and calculate the minimum, d_min, of the distances
+  from x_i to all x_j: j &lt;= i. </p>
+
+<p>Step 3. If d_min &gt;= delta, increase i  by 1, set x_i = x and
+  return to step 2 if i &lt;= n}, otherwise stop;</p>
+
+<p>Step 4. If
+  d_min &lt; delta, return to step 2 without increasing i. </p>
+
+<p>\bold{Sampling close pairs of points.}</p>
+
+<p>For some purposes, it is desirable that a spatial sampling scheme include
+  pairs of closely spaced points, resulting in an inhibitory plus close pairs
+  (<strong>ICP</strong>) design. In this case, the above algorithm requires the
+  following additional steps to be taken. Let k  be the required number
+  of close pairs. Choose a value rho  such that a close pair  of
+  points will be a pair of points separated by a distance of at most
+  {rho}. </p>
+
+<p>Step 5. Set j  = 1 and draw a random sample of size 2 from integers 1, 2,&hellip;, n, say (i_1, i_2);</p>
+
+<p>Step 6. Replace x_i_1 by x_i_2 + u, where
+  u  is uniformly distributed on the disc with centre x_i_2
+  and radius (rho), increase i by 1 and return to step 5 if i
+  &lt;= k, otherwise stop.</p>
+
+<p>When comparing a <strong>SI</strong> design to one of the <strong>ICP</strong> designs, the
+  inhibitory components should have the same degree of spatial regularity.
+  This requires delta to become a function of k namely
+  delta_k = delta_0*(sqrt{n/(n - k)}) with delta_0 held.</p>
+
+<h3>Returns</h3>
+
+<p>(1) A data.frame object named &#39;results&#39; of length <em>n</em>
+ containing the final sampled osmgeosample_ids, centroid longitude and
+ latitude. </p>
+
+<p>(2) An interactive map powered by <strong>mapview</strong> showing the boundary, full dataset and
+sampled data.</p>
+
+<h3>Notes</h3>
+
+<p>If &#39;delta&#39; is set to 0, a completely random sample is generated.
+  In this case, &#39;close pairs&#39; are not permitted and rho is
+  irrelevant.</p>
+
+<h3>Example:</h3>
+
+<pre><code class="c"> library(sp)
+bounding_geom&lt;-
+SpatialPolygonsDataFrame(
+    SpatialPolygons(list(Polygons(list(Polygon(
+        cbind(
+            c(3.888959,3.888744,3.888585,3.888355,3.887893,3.887504,3.886955,3.886565,3.886303,3.886159,
+           3.885650,3.885650,3.885595,3.885404,3.885444,3.885897,3.886692,3.887241,3.888068,3.888323,
+           3.888697,3.889150,3.889548,3.889890,3.890184,3.890828,3.891258,3.891807,3.892061,3.892292,
+           3.892689,3.893294,3.893008,3.893676,3.888959),
+           c(7.379483,7.379785,7.380024,7.380294,7.380629,7.380986,7.381448,7.381861,7.382243,7.382474,
+           7.383277,7.383468,7.383890,7.384263,7.384669,7.385258,7.385313,7.385194,7.384868,7.384900,
+           7.385051,7.385067,7.384955,7.384749,7.384526,7.384120,7.384009,7.384080,7.384430,7.384478,
+           7.384629,7.384772,7.383269,7.380963,7.379483)))), ID=1))),
+            ID=1))),
+    data.frame( ID=1))
+proj4string(bounding_geom) &lt;- CRS(&#39;+proj=longlat +datum=WGS84&#39;)
+
+set.seed(15892)
+osm_contin_inhibit_sample(bounding_geom = bounding_geom, boundary = 0, buff_dist=NULL,
+buff_epsg = NULL, sample_size = 50, plotit = TRUE, plotit_leaflet = TRUE,
+                   delta=50, delta.fix = FALSE,k=7,rho=1, ntries = 10)
+</code></pre>
+
+<h2>Related Packages</h2>
+
+<p>osmgeosample builds on Chipeta and Diggle&#39;s (2019) R package named geosample, which is used for the construction of Geostatistical sampling designs. Note that the geosample package is not present on CRAN, and can not be used for accessing OSM data. osmgeosample utilises a popular OSM mapping r package named osmdata which is authored and maintained by Mark Padgham and Robin Lovelace.  In addition, the Mapview R package allows us display our results on an interactive map (Appelhans et al, 2020).</p>
+
+<h2>Acknowledgements</h2>
+
+<p>This research was funded by the National Institute for Health Research (NIHR). Global Health Research Group on Improving Health in Slums. </p>
+
+<p>In addition, we would like to show our gratitude to all of the Volunteers from the OpenStreetMap community, HOT and missing maps.</p>
+
+<p>Finally, our collaborators and funders are: the National Institute for Health Research, The University of Warwick, the African Population and Health Research Center, The Aga Khan University, The Humanitarian OpenStreetMap Team, Missing Maps, HeiGIT.</p>
+
+<h2>References</h2>
+
+<p>Eugster, Manuel J a, and Thomas Schlesinger. 2012. “Osmar: OpenStreetMap and R.” The R Journal 5 (1): 53–64.</p>
+
+<p>Johnson, Peter A. 2017. “Models of Direct Editing of Government Spatial Data: Challenges and Constraints to the Acceptance of Contributed Data.” Cartography and Geographic Information Science 44 (2): 128–38. <a href="https://doi.org/10.1080/15230406.2016.1176536">https://doi.org/10.1080/15230406.2016.1176536</a>.</p>
+
+<p>Lovelace, Robin. 2014. “Harnessing Open Street Map Data with R and QGIS.” EloGeo.</p>
+
+<p>OpenStreetMap contributors. 2017. <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>.</p>
+
+<p>Padgham, Mark. 2016. Osmplotr: Customisable Images of Openstreetmap Data. <a href="https://cran.r-project.org/package=osmplotr">https://cran.r-project.org/package=osmplotr</a>.</p>
+
+<p>Rowlingson, B. and Diggle, P. 1993 Splancs: spatial point pattern analysis code in S-Plus. Computers and Geosciences, 19, 627-655 </p>
+
+<p>Chipeta  M G, Terlouw D J, Phiri K S and Diggle P J. (2016b). Inhibitory geostatistical designs for spatial prediction taking account of uncertain covariance structure, Enviromentrics, pp. 1-11.
+<a href="https://wiki.openstreetmap.org/wiki/Map_Features">https://wiki.openstreetmap.org/wiki/Map_Features</a></p>
+
+<p>Improving Health in Slums Collaborative. “A protocol for a multi-site, spatially-referenced household survey in slum settings: methods for access, sampling frame construction, sampling, and field data collection.” BMC medical research methodology vol. 19,1 109. 30 May. 2019, doi:10.1186/s12874-019-0732-x</p>
+
+<p>Porto De Albuquerque, Joao &amp; Yeboah, Godwin &amp; Pitidis, Vangelis &amp; Ulbrich, Philipp. (2018). Towards a participatory methodology for community data generation to analyse urban health inequalities: a multi-country case study. 10.13140/RG.2.2.13710.20804. </p>
+
+<p>Yeboah G, Troilo R, Pitidis V, Porto de Albuquerque, J. Analysis of OpenStreetMap data quality at different stages of a participatory mapping process: Evidence from informal urban settings.State of the Map. Heidelberg. Sep 2019.</p>
+
+</body>
+
+</html>
